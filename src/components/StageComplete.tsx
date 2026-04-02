@@ -18,7 +18,6 @@ export default function StageComplete({
   onRetry,
   onGoHome,
 }: StageCompleteProps) {
-  const passed = score >= stage.passingScore;
   const maxScore = stage.steps.reduce((acc, step) => {
     if (step.type === "choice") {
       const maxChoice = Math.max(...step.choices.map((c) => c.scoreDelta));
@@ -27,6 +26,7 @@ export default function StageComplete({
     return acc + step.scoreReward;
   }, 0);
   const percentage = Math.round((score / maxScore) * 100);
+  const passed = percentage >= stage.passingScore;
 
   return (
     <motion.div
