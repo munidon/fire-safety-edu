@@ -2,16 +2,17 @@ import { supabase } from "./supabase";
 
 // --- Progress ---
 export async function loadUserProgress(userId: string) {
-  const { data: progress } = await supabase
-    .from("progress")
-    .select("stage_id, unlocked")
-    .eq("user_id", userId)
-    .eq("unlocked", true);
-
-  const { data: scores } = await supabase
-    .from("scores")
-    .select("stage_id, score, survival_rate, time_spent, completed_at")
-    .eq("user_id", userId);
+  const [{ data: progress }, { data: scores }] = await Promise.all([
+    supabase
+      .from("progress")
+      .select("stage_id, unlocked")
+      .eq("user_id", userId)
+      .eq("unlocked", true),
+    supabase
+      .from("scores")
+      .select("stage_id, score, survival_rate, time_spent, completed_at")
+      .eq("user_id", userId),
+  ]);
 
   const unlockedStages = progress?.map((p) => p.stage_id) ?? [1];
   const stageResults =

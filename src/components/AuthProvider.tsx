@@ -53,15 +53,19 @@ export default function AuthProvider({
 
   const handleUserLogin = async (session: Session) => {
     const user = session.user;
-    const profile = await getUserProfile(user.id);
-    const nickname =
-      profile?.nickname ??
-      user.user_metadata?.nickname ??
-      "학습자";
-    setUser(user.id, nickname);
+    // 닉네임을 메타데이터에서 먼저 설정 (즉시 반영)
+    const quickNickname = user.user_metadata?.nickname ?? "학습자";
+    setUser(user.id, quickNickname);
 
-    const { unlockedStages, stageResults } = await loadUserProgress(user.id);
-    loadProgress(unlockedStages, stageResults);
+    // DB 쿼리를 병렬로 실행
+    const [profile, progress] = await Promise.all([
+      getUserProfile(user.id),
+      loadUserProgress(user.id),
+    ]);
+
+    const nickname = profile?.nickname ?? quickNickname;
+    setUser(user.id, nickname);
+    loadProgress(progress.unlockedStages, progress.stageResults);
   };
 
   if (loading) {
