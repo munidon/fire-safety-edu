@@ -75,35 +75,51 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* Stats bar */}
+        {/* Stats bar or CTA */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mt-6 flex justify-center gap-4 flex-wrap"
+          className="mt-6"
         >
-          <div className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700">
-            <span className="text-slate-400 text-xs">완료</span>{" "}
-            <span className="text-white font-bold">
-              {completedCount}/{STAGES.length}
-            </span>
-          </div>
-          <div className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700">
-            <span className="text-slate-400 text-xs">총점</span>{" "}
-            <span className="text-amber-400 font-bold">{totalScore}</span>
-          </div>
-          <button
-            onClick={() => router.push("/results")}
-            className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700 hover:border-blue-500 transition-colors text-sm text-slate-300 hover:text-white"
-          >
-            📊 나의 결과
-          </button>
-          <button
-            onClick={() => router.push("/leaderboard")}
-            className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700 hover:border-amber-500 transition-colors text-sm text-slate-300 hover:text-white"
-          >
-            🏆 랭킹
-          </button>
+          {userId ? (
+            <div className="flex justify-center gap-4 flex-wrap">
+              <div className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700">
+                <span className="text-slate-400 text-xs">완료</span>{" "}
+                <span className="text-white font-bold">
+                  {completedCount}/{STAGES.length}
+                </span>
+              </div>
+              <div className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700">
+                <span className="text-slate-400 text-xs">총점</span>{" "}
+                <span className="text-amber-400 font-bold">{totalScore}</span>
+              </div>
+              <button
+                onClick={() => router.push("/results")}
+                className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700 hover:border-blue-500 transition-colors text-sm text-slate-300 hover:text-white"
+              >
+                📊 나의 결과
+              </button>
+              <button
+                onClick={() => router.push("/leaderboard")}
+                className="bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700 hover:border-amber-500 transition-colors text-sm text-slate-300 hover:text-white"
+              >
+                🏆 랭킹
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-slate-400 text-sm">
+                로그인하고 친구들과 생존 점수를 겨뤄보세요!
+              </p>
+              <button
+                onClick={() => router.push("/login")}
+                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-orange-500/25"
+              >
+                지금 도전하기
+              </button>
+            </div>
+          )}
         </motion.div>
       </header>
 
