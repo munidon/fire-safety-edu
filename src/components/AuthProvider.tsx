@@ -16,13 +16,18 @@ export default function AuthProvider({
 
   useEffect(() => {
     const initAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        await handleUserLogin(session);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user) {
+          await handleUserLogin(session);
+        }
+      } catch (e) {
+        console.error("Auth init error:", e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -35,10 +40,14 @@ export default function AuthProvider({
       }
     );
 
-    initAuth();
+    // 5초 이내에 로딩이 끝나지 않으면 강제로 해제
+    const timeout = setTimeout(() => setLoading(false), 5000);
+
+    initAuth().then(() => clearTimeout(timeout));
 
     return () => {
       listener.subscription.unsubscribe();
+      clearTimeout(timeout);
     };
   }, []);
 
