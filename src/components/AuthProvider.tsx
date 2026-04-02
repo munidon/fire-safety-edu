@@ -52,9 +52,7 @@ export default function AuthProvider({
 
   const handleUserLogin = async (session: Session) => {
     const user = session.user;
-    // 닉네임을 메타데이터에서 먼저 설정 (즉시 반영)
-    const quickNickname = user.user_metadata?.nickname ?? "학습자";
-    setUser(user.id, quickNickname);
+    setUser(user.id, "학습자");
 
     // DB 쿼리를 병렬로 실행
     const [profile, progress] = await Promise.all([
@@ -62,7 +60,9 @@ export default function AuthProvider({
       loadUserProgress(user.id),
     ]);
 
-    const nickname = profile?.nickname ?? quickNickname;
+    // DB 닉네임 > 메타데이터 닉네임 > 기본값 순으로 적용
+    const nickname =
+      profile?.nickname ?? user.user_metadata?.nickname ?? "학습자";
     setUser(user.id, nickname);
     loadProgress(progress.unlockedStages, progress.stageResults);
   };
