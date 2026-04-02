@@ -15,35 +15,34 @@ export default function AuthProvider({
   const { setUser, clearUser, loadProgress } = useGameStore();
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.user) {
-          await handleUserLogin(session);
-        }
-      } catch (e) {
-        console.error("Auth init error:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
+    let initialLoad = true;
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          await handleUserLogin(session);
-        } else {
-          clearUser();
+      async (event, session) => {
+        try {
+          if (session?.user) {
+            await handleUserLogin(session);
+          } else {
+            clearUser();
+          }
+        } catch (e) {
+          console.error("Auth state change error:", e);
+        } finally {
+          if (initialLoad) {
+            initialLoad = false;
+            setLoading(false);
+          }
         }
       }
     );
 
-    // 5초 이내에 로딩이 끝나지 않으면 강제로 해제
-    const timeout = setTimeout(() => setLoading(false), 5000);
-
-    initAuth().then(() => clearTimeout(timeout));
+    // 안전장치: 5초 이내에 이벤트가 오지 않으면 로딩 해제
+    const timeout = setTimeout(() => {
+      if (initialLoad) {
+        initialLoad = false;
+        setLoading(false);
+      }
+    }, 5000);
 
     return () => {
       listener.subscription.unsubscribe();
