@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { loadUserProgress, getUserProfile } from "@/lib/database";
 import { useGameStore } from "@/store/gameStore";
-import type { Session } from "@supabase/supabase-js";
 
 export default function AuthProvider({
   children,
@@ -14,58 +13,41 @@ export default function AuthProvider({
   const [loading, setLoading] = useState(true);
   const { setUser, clearUser, loadProgress } = useGameStore();
 
-  useEffect(() => {
-    let initialLoad = true;
+  const restoreUser = async (userId: string, fallbackNickname: string) => {
+    const [profile, progress] = await Promise.all([
+      getUserProfile(userId),
+      loadUserProgress(userId),
+    ]);
+    setUser(userId, profile?.nickname ?? fallbackNickname);
+    loadProgress(progress.unlockedStages, progress.stageResults);
+  };
 
+  useEffect(() => {
+    // 1. 페이지 로드 시 세션 확인
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const fallback = session.user.user_metadata?.nickname ?? "학습자";
+        restoreUser(session.user.id, fallback).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // 2. 로그인/로그아웃 이벤트 감지
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
-          if (session?.user) {
-            await handleUserLogin(session);
-          } else {
-            clearUser();
-          }
-        } catch (e) {
-          console.error("Auth state change error:", e);
-        } finally {
-          if (initialLoad) {
-            initialLoad = false;
-            setLoading(false);
-          }
+      (event, session) => {
+        if (event === "SIGNED_IN" && session?.user) {
+          const fallback = session.user.user_metadata?.nickname ?? "학습자";
+          restoreUser(session.user.id, fallback);
+        }
+        if (event === "SIGNED_OUT") {
+          clearUser();
         }
       }
     );
 
-    // 안전장치: 5초 이내에 이벤트가 오지 않으면 로딩 해제
-    const timeout = setTimeout(() => {
-      if (initialLoad) {
-        initialLoad = false;
-        setLoading(false);
-      }
-    }, 5000);
-
-    return () => {
-      listener.subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
+    return () => listener.subscription.unsubscribe();
   }, []);
-
-  const handleUserLogin = async (session: Session) => {
-    const user = session.user;
-    setUser(user.id, "학습자");
-
-    // DB 쿼리를 병렬로 실행
-    const [profile, progress] = await Promise.all([
-      getUserProfile(user.id),
-      loadUserProgress(user.id),
-    ]);
-
-    // DB 닉네임 > 메타데이터 닉네임 > 기본값 순으로 적용
-    const nickname =
-      profile?.nickname ?? user.user_metadata?.nickname ?? "학습자";
-    setUser(user.id, nickname);
-    loadProgress(progress.unlockedStages, progress.stageResults);
-  };
 
   if (loading) {
     return (
