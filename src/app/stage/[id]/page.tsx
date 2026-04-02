@@ -41,10 +41,8 @@ export default function StagePage() {
       updateSurvivalRate(choice.survivalDelta);
 
       if (stageData && currentStep + 1 >= stageData.steps.length) {
-        const newScore = useGameStore.getState().score + choice.scoreDelta;
-        const newSurvival =
-          useGameStore.getState().survivalRate + choice.survivalDelta;
-        finishStage(newScore, Math.max(0, Math.min(100, newSurvival)));
+        const state = useGameStore.getState();
+        finishStage(state.score, Math.max(0, Math.min(100, state.survivalRate)));
       } else {
         setStep(currentStep + 1);
       }
@@ -66,13 +64,7 @@ export default function StagePage() {
 
       if (currentStep + 1 >= stageData.steps.length) {
         const state = useGameStore.getState();
-        const newScore = success
-          ? state.score + step.scoreReward
-          : state.score;
-        const newSurvival = success
-          ? state.survivalRate
-          : Math.max(0, state.survivalRate + step.survivalDelta);
-        finishStage(newScore, newSurvival);
+        finishStage(state.score, Math.max(0, state.survivalRate));
       } else {
         setStep(currentStep + 1);
       }
